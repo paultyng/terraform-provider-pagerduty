@@ -1,3 +1,9 @@
+## 1.9.6 (Unreleased)
+
+IMPROVEMENTS::
+* resource/pagerduty_service_integration: Add support for email_filter and  email_parser ([#88](https://github.com/terraform-providers/terraform-provider-pagerduty/issues/88))
+
+
 ## 1.9.5 (March 11, 2021)
 BUG FIXES:
 * `data_source_pagerduty_ruleset`: Fixed bug by adding `routing_keys` to data source schema ([#312](https://github.com/PagerDuty/terraform-provider-pagerduty/pull/312))
