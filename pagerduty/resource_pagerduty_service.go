@@ -27,6 +27,10 @@ func resourcePagerDutyService() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringDoesNotMatch(regexp.MustCompile(`^$|^[ ]+$|[/\\<>&]`), "Service name can't be blank or contain '\\', '/', '&', '<', '>' or non-printable characters. "),
 			},
+			"type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"html_url": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -315,6 +319,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 		}
 
 		d.Set("name", service.Name)
+		d.Set("type", service.Type)
 		d.Set("html_url", service.HTMLURL)
 		d.Set("status", service.Status)
 		d.Set("created_at", service.CreatedAt)
