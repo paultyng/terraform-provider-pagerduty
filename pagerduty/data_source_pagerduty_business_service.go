@@ -19,6 +19,10 @@ func dataSourcePagerDutyBusinessService() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -60,6 +64,7 @@ func dataSourcePagerDutyBusinessServiceRead(d *schema.ResourceData, meta interfa
 
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
+		d.Set("type", found.Type)
 
 		return nil
 	})
