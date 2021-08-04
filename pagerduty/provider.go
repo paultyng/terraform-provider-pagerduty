@@ -25,6 +25,12 @@ func Provider() terraform.ResourceProvider {
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_TOKEN", nil),
 			},
+
+			"base_url": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -100,6 +106,7 @@ func providerConfigure(data *schema.ResourceData, terraformVersion string) (inte
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
 		Token:               data.Get("token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
+		BaseURL:             data.Get("base_url").(string),
 	}
 
 	log.Println("[INFO] Initializing PagerDuty client")

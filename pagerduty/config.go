@@ -19,6 +19,9 @@ type Config struct {
 
 	// UserAgent for API Client
 	UserAgent string
+
+	// BaseURL for API Client
+	BaseURL string
 }
 
 const invalidCreds = `
@@ -44,6 +47,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 		HTTPClient: httpClient,
 		Token:      c.Token,
 		UserAgent:  c.UserAgent,
+		BaseURL:    c.BaseURL,
 	}
 
 	client, err := pagerduty.NewClient(config)
