@@ -70,6 +70,11 @@ func resourcePagerDutyExtensionServiceNow() *schema.Resource {
 				Required:  true,
 				Sensitive: true,
 			},
+			"summary": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 			"sync_options": {
 				Type:         schema.TypeString,
 				Required:     true,
