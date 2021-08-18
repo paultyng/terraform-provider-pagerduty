@@ -6,12 +6,11 @@ import (
 	"runtime"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 // Provider represents a resource provider in Terraform
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
 	p := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"skip_credentials_validation": {
