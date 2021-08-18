@@ -75,6 +75,7 @@ The following arguments are supported:
   * `extension_schema` - (Required) This is the schema for this extension.
   * `extension_objects` - (Required) This is the objects for which the extension applies (An array of service ids).
   * `config` - (Optional) The configuration of the service extension as string containing plain JSON-encoded data.
+  * `summary`- A short-form, server-generated string that provides succinct, important information about an object suitable for primary labeling of an entity in a client. In many cases, this will be identical to `name`, though it is not intended to be an identifier.
 
     **Note:** You can use the `pagerduty_extension_schema` data source to locate the appropriate extension vendor ID.
 ## Attributes Reference
