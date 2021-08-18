@@ -56,8 +56,9 @@ func resourcePagerDutyService() *schema.Resource {
 				}),
 			},
 			"alert_grouping_timeout": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeString,
 				Optional: true,
+				Default:  "null",
 			},
 			"alert_grouping_parameters": {
 				Type:     schema.TypeList,
@@ -298,10 +299,14 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	} else {
 		service.AlertGroupingParameters = &pagerduty.AlertGroupingParameters{}
 	}
-	// Using GetOkExists to allow for alert_grouping_timeout to be set to 0 if needed.
-	if attr, ok := d.GetOkExists("alert_grouping_timeout"); ok {
-		val := attr.(int)
-		service.AlertGroupingTimeout = &val
+	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
+		if attr.(string) != "null" {
+			if val, err := strconv.Atoi(attr.(string)); err == nil {
+				service.AlertGroupingTimeout = &val
+			} else {
+				return nil, err
+			}
+		}
 	}
 
 	if attr, ok := d.GetOk("escalation_policy"); ok {
