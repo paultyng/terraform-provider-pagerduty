@@ -127,7 +127,7 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 		if err := d.Set("extension_objects", flattenExtensionObjects(extension.ExtensionObjects)); err != nil {
 			log.Printf("[WARN] error setting extension_objects: %s", err)
 		}
-		d.Set("extension_schema", extension.ExtensionSchema)
+		d.Set("extension_schema", extension.ExtensionSchema.ID)
 
 		if err := d.Set("config", flattenExtensionConfig(extension.Config)); err != nil {
 			log.Printf("[WARN] error setting extension config: %s", err)
