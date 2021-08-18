@@ -41,7 +41,7 @@ func resourcePagerDutyUserNotificationRule() *schema.Resource {
 			},
 			"contact_method": {
 				Required: true,
-				Type:     schema.TypeMap,
+				Type:     schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
