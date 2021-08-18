@@ -29,6 +29,31 @@ func dataSourcePagerDutyUserContactMethod() *schema.Resource {
 				Required:    true,
 				Description: "The type of the contact method",
 			},
+
+			"address": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"blacklisted": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"country_code": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"device_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"enabled": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"send_short_email": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -72,11 +97,11 @@ func dataSourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta inter
 		d.Set("address", found.Address)
 		d.Set("blacklisted", found.BlackListed)
 		d.Set("country_code", found.CountryCode)
+		d.Set("device_type", found.DeviceType)
 		d.Set("enabled", found.Enabled)
 		d.Set("label", found.Label)
 		d.Set("send_short_email", found.SendShortEmail)
 		d.Set("type", found.Type)
-		d.Set("device_type", found.DeviceType)
 
 		return nil
 	})
