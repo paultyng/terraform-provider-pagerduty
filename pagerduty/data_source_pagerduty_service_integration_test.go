@@ -101,7 +101,8 @@ data "pagerduty_service_integration" "service_integration" {
 }
 
 output "output_id" {
- value = data.pagerduty_service_integration.service_integration.integration_key
+ value     = data.pagerduty_service_integration.service_integration.integration_key
+ sensitive = true
 }
 `, service, serviceIntegration)
 }
