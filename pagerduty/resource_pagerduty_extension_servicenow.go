@@ -162,7 +162,7 @@ func resourcePagerDutyExtensionServiceNowRead(d *schema.ResourceData, meta inter
 		if err := d.Set("extension_objects", flattenExtensionServiceNowObjects(extension.ExtensionObjects)); err != nil {
 			log.Printf("[WARN] error setting extension_objects: %s", err)
 		}
-		d.Set("extension_schema", extension.ExtensionSchema)
+		d.Set("extension_schema", extension.ExtensionSchema.ID)
 
 		b, _ := json.Marshal(extension.Config)
 		var config = new(PagerDutyExtensionServiceNowConfig)
