@@ -24,6 +24,8 @@ func resourcePagerDutyServiceDependency() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				ForceNew: true,
+				MinItems: 1,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"supporting_service": {
