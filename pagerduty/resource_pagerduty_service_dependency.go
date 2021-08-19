@@ -147,7 +147,7 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 		time.Sleep(2 * time.Second)
 		return retryErr
 	}
-	return resourcePagerDutyServiceDependencyRead(d, meta)
+	return nil
 }
 
 func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta interface{}) error {
