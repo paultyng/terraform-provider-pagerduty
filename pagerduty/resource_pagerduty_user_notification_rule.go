@@ -108,7 +108,6 @@ func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta inte
 			return nil
 		}
 
-		d.Set("type", resp.Type)
 		d.Set("urgency", resp.Urgency)
 		d.Set("start_delay_in_minutes", resp.StartDelayInMinutes)
 		d.Set("contact_method", flattenContactMethod(resp.ContactMethod))
