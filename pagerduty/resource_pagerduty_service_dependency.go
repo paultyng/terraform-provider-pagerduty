@@ -128,6 +128,9 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 		} else {
 			for _, r := range dependencies.Relationships {
 				d.SetId(r.ID)
+				if err := d.Set("dependency", flattenRelationship(r)); err != nil {
+					return resource.NonRetryableError(err)
+				}
 			}
 		}
 		return nil
