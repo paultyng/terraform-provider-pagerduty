@@ -185,9 +185,18 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	input := pagerduty.ListServiceDependencies{
 		Relationships: r,
 	}
-	_, _, err = client.ServiceDependencies.DisassociateServiceDependencies(&input)
-	if err != nil {
-		return err
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if _, _, err = client.ServiceDependencies.DisassociateServiceDependencies(&input); err != nil {
+			if isErrCode(err, 404) {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
 
 	return nil
