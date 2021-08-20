@@ -203,15 +203,15 @@ func flattenRelationship(r *pagerduty.ServiceDependency) []map[string]interface{
 	var rels []map[string]interface{}
 
 	relationship := map[string]interface{}{
-		"supporting_service": flattenService(r.SupportingService),
-		"dependent_service":  flattenService(r.DependentService),
+		"supporting_service": flattenServiceReference(r.SupportingService),
+		"dependent_service":  flattenServiceReference(r.DependentService),
 	}
 	rels = append(rels, relationship)
 
 	return rels
 }
 
-func flattenService(s *pagerduty.ServiceObj) []map[string]interface{} {
+func flattenServiceReference(s *pagerduty.ServiceObj) []map[string]interface{} {
 	var servs []map[string]interface{}
 
 	service := map[string]interface{}{
