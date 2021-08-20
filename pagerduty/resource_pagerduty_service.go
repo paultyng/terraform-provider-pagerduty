@@ -348,14 +348,14 @@ func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Creating PagerDuty service %s", service.Name)
 
-	service, _, err = client.Services.Create(service)
+	createdService, _, err := client.Services.Create(service)
 	if err != nil {
 		return err
 	}
 
-	d.SetId(service.ID)
+	d.SetId(createdService.ID)
 
-	return resourcePagerDutyServiceRead(d, meta)
+	return flattenService(d, createdService)
 }
 
 func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) error {
