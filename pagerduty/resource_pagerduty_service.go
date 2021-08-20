@@ -393,7 +393,7 @@ func resourcePagerDutyServiceRead(d *schema.ResourceData, meta interface{}) erro
 		if service.AlertGroupingTimeout == nil {
 			d.Set("alert_grouping_timeout", "null")
 		} else {
-			d.Set("alert_grouping_timeout", *service.AlertGroupingTimeout)
+			d.Set("alert_grouping_timeout", strconv.Itoa(*service.AlertGroupingTimeout))
 		}
 		if service.AlertGroupingParameters != nil {
 			if err := d.Set("alert_grouping_parameters", flattenAlertGroupingParameters(service.AlertGroupingParameters)); err != nil {
