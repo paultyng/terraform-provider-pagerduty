@@ -54,17 +54,22 @@ func resourcePagerDutyService() *schema.Resource {
 					"intelligent",
 					"rules",
 				}),
+				Deprecated:    "Use `alert_grouping_parameters.type`",
+				ConflictsWith: []string{"alert_grouping_parameters"},
 			},
 			"alert_grouping_timeout": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Deprecated:    "Use `alert_grouping_parameters.config.timeout`",
+				ConflictsWith: []string{"alert_grouping_parameters"},
 			},
 			"alert_grouping_parameters": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Optional: true,
-				MaxItems: 1,
+				Type:          schema.TypeList,
+				Computed:      true,
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"alert_grouping", "alert_grouping_timeout"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
