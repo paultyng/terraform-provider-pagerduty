@@ -296,8 +296,6 @@ func buildServiceStruct(d *schema.ResourceData) (*pagerduty.Service, error) {
 	}
 	if attr, ok := d.GetOk("alert_grouping_parameters"); ok {
 		service.AlertGroupingParameters = expandAlertGroupingParameters(attr)
-	} else {
-		service.AlertGroupingParameters = &pagerduty.AlertGroupingParameters{}
 	}
 	if attr, ok := d.GetOk("alert_grouping_timeout"); ok {
 		if attr.(string) != "null" {
