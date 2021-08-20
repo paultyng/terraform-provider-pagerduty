@@ -75,8 +75,8 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 						"pagerduty_service.foo", "alert_creation", "create_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
-					resource.TestCheckNoResourceAttr(
-						"pagerduty_service.foo", "alert_grouping_timeout"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_timeout", "null"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
