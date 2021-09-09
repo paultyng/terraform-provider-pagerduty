@@ -112,8 +112,8 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
 	config := Config{
-		ApiURL:              data.Get("apiurl").(string),
-		AppURL:              data.Get("appurl").(string),
+		ApiUrl:              data.Get("api_url").(string),
+		AppUrl:              data.Get("app_url").(string),
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
 		Token:               data.Get("token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
