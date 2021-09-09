@@ -11,6 +11,12 @@ import (
 
 // Config defines the configuration options for the PagerDuty client
 type Config struct {
+	// The PagerDuty API URL
+	ApiURL string
+
+	// The PagerDuty APP URL
+	AppURL string
+
 	// The PagerDuty API V2 token
 	Token string
 
@@ -40,6 +46,7 @@ func (c *Config) Client() (*pagerduty.Client, error) {
 	httpClient.Transport = logging.NewTransport("PagerDuty", http.DefaultTransport)
 
 	config := &pagerduty.Config{
+		BaseURL:    c.ApiURL,
 		Debug:      logging.IsDebugOrHigher(),
 		HTTPClient: httpClient,
 		Token:      c.Token,
