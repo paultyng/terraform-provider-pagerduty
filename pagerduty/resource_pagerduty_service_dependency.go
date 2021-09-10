@@ -24,6 +24,8 @@ func resourcePagerDutyServiceDependency() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				ForceNew: true,
+				MinItems: 1,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"supporting_service": {
@@ -74,14 +76,22 @@ func resourcePagerDutyServiceDependency() *schema.Resource {
 }
 
 func buildServiceDependencyStruct(d *schema.ResourceData) (*pagerduty.ServiceDependency, error) {
-	var rel *pagerduty.ServiceDependency
-	rel = new(pagerduty.ServiceDependency)
+	rel := new(pagerduty.ServiceDependency)
+	rel.ID = d.Id()
 
 	for _, r := range d.Get("dependency").([]interface{}) {
 		relmap := r.(map[string]interface{})
-		rel.SupportingService = expandService(relmap["supporting_service"].(interface{}))
-		rel.DependentService = expandService(relmap["dependent_service"].(interface{}))
+		rel.SupportingService = expandService(relmap["supporting_service"])
+		rel.DependentService = expandService(relmap["dependent_service"])
 	}
+
+	if rel.SupportingService == nil {
+		return nil, fmt.Errorf("dependent service not found for dependency: %v", d.Id())
+	}
+	if rel.DependentService == nil {
+		return nil, fmt.Errorf("supporting service not found for dependency: %v", d.Id())
+	}
+
 	if attr, ok := d.GetOk("type"); ok {
 		rel.Type = attr.(string)
 	}
@@ -126,6 +136,9 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 		} else {
 			for _, r := range dependencies.Relationships {
 				d.SetId(r.ID)
+				if err := d.Set("dependency", flattenRelationship(r)); err != nil {
+					return resource.NonRetryableError(err)
+				}
 			}
 		}
 		return nil
@@ -134,7 +147,7 @@ func resourcePagerDutyServiceDependencyAssociate(d *schema.ResourceData, meta in
 		time.Sleep(2 * time.Second)
 		return retryErr
 	}
-	return resourcePagerDutyServiceDependencyRead(d, meta)
+	return nil
 }
 
 func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta interface{}) error {
@@ -180,9 +193,18 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 	input := pagerduty.ListServiceDependencies{
 		Relationships: r,
 	}
-	_, _, err = client.ServiceDependencies.DisassociateServiceDependencies(&input)
-	if err != nil {
-		return err
+	retryErr := resource.Retry(30*time.Second, func() *resource.RetryError {
+		if _, _, err = client.ServiceDependencies.DisassociateServiceDependencies(&input); err != nil {
+			if isErrCode(err, 404) {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	if retryErr != nil {
+		time.Sleep(2 * time.Second)
+		return retryErr
 	}
 
 	return nil
@@ -190,6 +212,9 @@ func resourcePagerDutyServiceDependencyDisassociate(d *schema.ResourceData, meta
 
 func resourcePagerDutyServiceDependencyRead(d *schema.ResourceData, meta interface{}) error {
 	serviceDependency, err := buildServiceDependencyStruct(d)
+	if err != nil {
+		return err
+	}
 	log.Printf("[INFO] Reading PagerDuty dependency %s", serviceDependency.ID)
 
 	if err = findDependencySetState(d.Id(), serviceDependency.DependentService.ID, serviceDependency.DependentService.Type, d, meta); err != nil {
