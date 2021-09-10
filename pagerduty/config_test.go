@@ -26,3 +26,16 @@ func TestConfigSkipCredsValidation(t *testing.T) {
 		t.Fatalf("error: expected the client to not fail: %v", err)
 	}
 }
+
+// Test config with a custom baseURL
+func TestConfigCustomBaseURL(t *testing.T) {
+	config := Config{
+		Token:               "foo",
+		BaseURL:             "https://baseurl.com",
+		SkipCredsValidation: true,
+	}
+
+	if _, err := config.Client(); err != nil {
+		t.Fatalf("error: expected the client to not fail: %v", err)
+	}
+}
