@@ -3,10 +3,12 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -103,8 +105,9 @@ func resourcePagerDutySchedule() *schema.Resource {
 									},
 
 									"start_time_of_day": {
-										Type:     schema.TypeString,
-										Required: true,
+										Type:         schema.TypeString,
+										Required:     true,
+										ValidateFunc: validation.StringMatch(regexp.MustCompile(`([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]`), "must be of 00:00:00 format"),
 									},
 
 									"start_day_of_week": {
