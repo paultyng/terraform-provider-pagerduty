@@ -106,41 +106,8 @@ func buildServiceIntegrationStruct(d *schema.ResourceData) *pagerduty.Integratio
 	return serviceIntegration
 }
 
-func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta interface{}) error {
+func fetchPagerDutyServiceIntegration(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client := meta.(*pagerduty.Client)
-
-	serviceIntegration := buildServiceIntegrationStruct(d)
-
-	log.Printf("[INFO] Creating PagerDuty service integration %s", serviceIntegration.Name)
-
-	service := d.Get("service").(string)
-
-	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
-		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
-			if isErrCode(err, 400) {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(err)
-			}
-
-			return resource.NonRetryableError(err)
-		} else if serviceIntegration != nil {
-			d.SetId(serviceIntegration.ID)
-		}
-		return nil
-	})
-
-	if retryErr != nil {
-		return retryErr
-	}
-
-	return resourcePagerDutyServiceIntegrationRead(d, meta)
-}
-
-func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
-
-	log.Printf("[INFO] Reading PagerDuty service integration %s", d.Id())
-
 	service := d.Get("service").(string)
 
 	o := &pagerduty.GetIntegrationOptions{}
@@ -149,7 +116,7 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 		serviceIntegration, _, err := client.Services.GetIntegration(service, d.Id(), o)
 		if err != nil {
 			log.Printf("[WARN] Service integration read error")
-			errResp := handleNotFoundError(err, d)
+			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
 				return resource.RetryableError(errResp)
@@ -183,6 +150,41 @@ func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interf
 
 		return nil
 	})
+}
+
+func resourcePagerDutyServiceIntegrationCreate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*pagerduty.Client)
+
+	serviceIntegration := buildServiceIntegrationStruct(d)
+
+	log.Printf("[INFO] Creating PagerDuty service integration %s", serviceIntegration.Name)
+
+	service := d.Get("service").(string)
+
+	retryErr := resource.Retry(1*time.Minute, func() *resource.RetryError {
+		if serviceIntegration, _, err := client.Services.CreateIntegration(service, serviceIntegration); err != nil {
+			if isErrCode(err, 400) {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(err)
+			}
+
+			return resource.NonRetryableError(err)
+		} else if serviceIntegration != nil {
+			d.SetId(serviceIntegration.ID)
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		return retryErr
+	}
+
+	return fetchPagerDutyServiceIntegration(d, meta, genError)
+}
+
+func resourcePagerDutyServiceIntegrationRead(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[INFO] Reading PagerDuty service integration %s", d.Id())
+	return fetchPagerDutyServiceIntegration(d, meta, handleNotFoundError)
 }
 
 func resourcePagerDutyServiceIntegrationUpdate(d *schema.ResourceData, meta interface{}) error {

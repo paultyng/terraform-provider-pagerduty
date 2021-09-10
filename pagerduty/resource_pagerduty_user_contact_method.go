@@ -92,26 +92,9 @@ func buildUserContactMethodStruct(d *schema.ResourceData) *pagerduty.ContactMeth
 
 	return contactMethod
 }
-func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta interface{}) error {
+
+func fetchPagerDutyUserContactMethod(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client := meta.(*pagerduty.Client)
-
-	userID := d.Get("user_id").(string)
-
-	contactMethod := buildUserContactMethodStruct(d)
-
-	resp, _, err := client.Users.CreateContactMethod(userID, contactMethod)
-	if err != nil {
-		return err
-	}
-
-	d.SetId(resp.ID)
-
-	return resourcePagerDutyUserContactMethodRead(d, meta)
-}
-
-func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
-
 	userID := d.Get("user_id").(string)
 
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
@@ -136,6 +119,27 @@ func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interfa
 
 		return nil
 	})
+}
+
+func resourcePagerDutyUserContactMethodCreate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*pagerduty.Client)
+
+	userID := d.Get("user_id").(string)
+
+	contactMethod := buildUserContactMethodStruct(d)
+
+	resp, _, err := client.Users.CreateContactMethod(userID, contactMethod)
+	if err != nil {
+		return err
+	}
+
+	d.SetId(resp.ID)
+
+	return fetchPagerDutyUserContactMethod(d, meta, genError)
+}
+
+func resourcePagerDutyUserContactMethodRead(d *schema.ResourceData, meta interface{}) error {
+	return fetchPagerDutyUserContactMethod(d, meta, handleNotFoundError)
 }
 
 func resourcePagerDutyUserContactMethodUpdate(d *schema.ResourceData, meta interface{}) error {

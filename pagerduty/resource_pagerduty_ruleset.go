@@ -99,6 +99,33 @@ func flattenTeam(v *pagerduty.RulesetObject) []interface{} {
 
 	return []interface{}{team}
 }
+
+func fetchPagerDutyRuleset(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
+	client := meta.(*pagerduty.Client)
+	return resource.Retry(2*time.Minute, func() *resource.RetryError {
+		ruleset, _, err := client.Rulesets.Get(d.Id())
+		if err != nil {
+			errResp := errCallback(err, d)
+			if errResp != nil {
+				time.Sleep(2 * time.Second)
+				return resource.RetryableError(errResp)
+			}
+
+			return nil
+		}
+		d.Set("name", ruleset.Name)
+		d.Set("type", ruleset.Type)
+
+		// if ruleset is found set to ResourceData
+		if ruleset.Team != nil {
+			d.Set("team", flattenTeam(ruleset.Team))
+		}
+		d.Set("routing_keys", ruleset.RoutingKeys)
+
+		return nil
+	})
+}
+
 func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
@@ -122,37 +149,13 @@ func resourcePagerDutyRulesetCreate(d *schema.ResourceData, meta interface{}) er
 	if retryErr != nil {
 		return retryErr
 	}
-
-	return resourcePagerDutyRulesetRead(d, meta)
+	return fetchPagerDutyRuleset(d, meta, genError)
 }
 
 func resourcePagerDutyRulesetRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
-
 	log.Printf("[INFO] Reading PagerDuty ruleset: %s", d.Id())
+	return fetchPagerDutyRuleset(d, meta, handleNotFoundError)
 
-	return resource.Retry(2*time.Minute, func() *resource.RetryError {
-		ruleset, _, err := client.Rulesets.Get(d.Id())
-		if err != nil {
-			errResp := handleNotFoundError(err, d)
-			if errResp != nil {
-				time.Sleep(2 * time.Second)
-				return resource.RetryableError(errResp)
-			}
-
-			return nil
-		}
-		d.Set("name", ruleset.Name)
-		d.Set("type", ruleset.Type)
-
-		// if ruleset is found set to ResourceData
-		if ruleset.Team != nil {
-			d.Set("team", flattenTeam(ruleset.Team))
-		}
-		d.Set("routing_keys", ruleset.RoutingKeys)
-
-		return nil
-	})
 }
 func resourcePagerDutyRulesetUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)

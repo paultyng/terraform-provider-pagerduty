@@ -41,32 +41,13 @@ func buildAddonStruct(d *schema.ResourceData) *pagerduty.Addon {
 	return addon
 }
 
-func resourcePagerDutyAddonCreate(d *schema.ResourceData, meta interface{}) error {
+func fetchPagerDutyAddon(d *schema.ResourceData, meta interface{}, errCallback func(error, *schema.ResourceData) error) error {
 	client := meta.(*pagerduty.Client)
-
-	addon := buildAddonStruct(d)
-
-	log.Printf("[INFO] Creating PagerDuty add-on %s", addon.Name)
-
-	addon, _, err := client.Addons.Install(addon)
-	if err != nil {
-		return err
-	}
-
-	d.SetId(addon.ID)
-
-	return resourcePagerDutyAddonRead(d, meta)
-}
-
-func resourcePagerDutyAddonRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*pagerduty.Client)
-
-	log.Printf("[INFO] Reading PagerDuty add-on %s", d.Id())
-
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		addon, _, err := client.Addons.Get(d.Id())
 		if err != nil {
-			errResp := handleNotFoundError(err, d)
+			log.Printf("[WARN] Service read error")
+			errResp := errCallback(err, d)
 			if errResp != nil {
 				time.Sleep(2 * time.Second)
 				return resource.RetryableError(errResp)
@@ -80,6 +61,28 @@ func resourcePagerDutyAddonRead(d *schema.ResourceData, meta interface{}) error 
 
 		return nil
 	})
+}
+
+func resourcePagerDutyAddonCreate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*pagerduty.Client)
+
+	addon := buildAddonStruct(d)
+
+	log.Printf("[INFO] Creating PagerDuty add-on %s", addon.Name)
+
+	addon, _, err := client.Addons.Install(addon)
+	if err != nil {
+		return err
+	}
+
+	d.SetId(addon.ID)
+	// Retrying on creates incase of eventual consistency on creation
+	return fetchPagerDutyAddon(d, meta, genError)
+}
+
+func resourcePagerDutyAddonRead(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[INFO] Reading PagerDuty add-on %s", d.Id())
+	return fetchPagerDutyAddon(d, meta, handleNotFoundError)
 }
 
 func resourcePagerDutyAddonUpdate(d *schema.ResourceData, meta interface{}) error {

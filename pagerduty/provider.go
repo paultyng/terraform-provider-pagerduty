@@ -88,14 +88,17 @@ func isErrCode(err error, code int) bool {
 	return false
 }
 
+func genError(err error, d *schema.ResourceData) error {
+	return fmt.Errorf("Error reading: %s: %s", d.Id(), err)
+}
+
 func handleNotFoundError(err error, d *schema.ResourceData) error {
 	if isErrCode(err, 404) {
 		log.Printf("[WARN] Removing %s because it's gone", d.Id())
 		d.SetId("")
 		return nil
 	}
-
-	return fmt.Errorf("Error reading: %s: %s", d.Id(), err)
+	return genError(err, d)
 }
 
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
