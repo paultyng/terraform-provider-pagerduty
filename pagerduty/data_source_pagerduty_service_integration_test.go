@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDataSourcePagerDutyIntegration_Basic(t *testing.T) {
@@ -101,7 +101,8 @@ data "pagerduty_service_integration" "service_integration" {
 }
 
 output "output_id" {
- value = data.pagerduty_service_integration.service_integration.integration_key
+ value     = data.pagerduty_service_integration.service_integration.integration_key
+ sensitive = true
 }
 `, service, serviceIntegration)
 }

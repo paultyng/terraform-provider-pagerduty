@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -17,11 +17,6 @@ func dataSourcePagerDutyVendor() *schema.Resource {
 		Read: dataSourcePagerDutyVendorRead,
 
 		Schema: map[string]*schema.Schema{
-			"name_regex": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Removed:  "Use `name` instead. This attribute will be removed in a future version",
-			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -47,13 +42,13 @@ func dataSourcePagerDutyVendorRead(d *schema.ResourceData, meta interface{}) err
 	return resource.Retry(2*time.Minute, func() *resource.RetryError {
 		resp, _, err := client.Vendors.List(o)
 		if err != nil {
-			if (isErrCode(err, 429)) {
+			if isErrCode(err, 429) {
 				// Delaying retry by 30s as recommended by PagerDuty
 				// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
 				time.Sleep(30 * time.Second)
 				return resource.RetryableError(err)
 			}
-			
+
 			return resource.NonRetryableError(err)
 		}
 

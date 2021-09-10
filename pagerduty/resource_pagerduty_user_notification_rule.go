@@ -3,11 +3,13 @@ package pagerduty
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -42,38 +44,31 @@ func resourcePagerDutyUserNotificationRule() *schema.Resource {
 			"contact_method": {
 				Required: true,
 				Type:     schema.TypeMap,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"type": {
-							Type:     schema.TypeString,
-							Required: true,
-							ValidateFunc: validateValueFunc([]string{
-								"email_contact_method",
-								"phone_contact_method",
-								"push_notification_contact_method",
-								"sms_contact_method",
-							}),
-						},
-					},
+				// Using the `Elem` block to define specific keys for the map is currently not possible.
+				// The workaround described in SDK documentation is to confirm the required keys are set when expanding the Map object inside the resource code.
+				// See https://www.terraform.io/docs/extend/schemas/schema-types.html#typemap
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
+				ValidateDiagFunc: validation.MapKeyMatch(regexp.MustCompile("(id|type)"), "`contact_method` must only have `id` and `types` attributes"),
 			},
 		},
 	}
 }
 
-func buildUserNotificationRuleStruct(d *schema.ResourceData) *pagerduty.NotificationRule {
+func buildUserNotificationRuleStruct(d *schema.ResourceData) (*pagerduty.NotificationRule, error) {
+	contactMethod, err := expandContactMethod(d.Get("contact_method"))
+	if err != nil {
+		return nil, err
+	}
 	notificationRule := &pagerduty.NotificationRule{
 		Type:                "assignment_notification_rule",
 		StartDelayInMinutes: d.Get("start_delay_in_minutes").(int),
 		Urgency:             d.Get("urgency").(string),
-		ContactMethod:       expandContactMethod(d.Get("contact_method")),
+		ContactMethod:       contactMethod,
 	}
 
-	return notificationRule
+	return notificationRule, nil
 }
 
 func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta interface{}) error {
@@ -81,7 +76,10 @@ func resourcePagerDutyUserNotificationRuleCreate(d *schema.ResourceData, meta in
 
 	userID := d.Get("user_id").(string)
 
-	notificationRule := buildUserNotificationRuleStruct(d)
+	notificationRule, err := buildUserNotificationRuleStruct(d)
+	if err != nil {
+		return err
+	}
 
 	resp, _, err := client.Users.CreateNotificationRule(userID, notificationRule)
 	if err != nil {
@@ -110,7 +108,6 @@ func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta inte
 			return nil
 		}
 
-		d.Set("type", resp.Type)
 		d.Set("urgency", resp.Urgency)
 		d.Set("start_delay_in_minutes", resp.StartDelayInMinutes)
 		d.Set("contact_method", flattenContactMethod(resp.ContactMethod))
@@ -122,13 +119,16 @@ func resourcePagerDutyUserNotificationRuleRead(d *schema.ResourceData, meta inte
 func resourcePagerDutyUserNotificationRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*pagerduty.Client)
 
-	contactMethod := buildUserNotificationRuleStruct(d)
+	notificationRule, err := buildUserNotificationRuleStruct(d)
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[INFO] Updating PagerDuty user notification rule %s", d.Id())
 
 	userID := d.Get("user_id").(string)
 
-	if _, _, err := client.Users.UpdateNotificationRule(userID, d.Id(), contactMethod); err != nil {
+	if _, _, err := client.Users.UpdateNotificationRule(userID, d.Id(), notificationRule); err != nil {
 		return err
 	}
 
@@ -172,15 +172,33 @@ func resourcePagerDutyUserNotificationRuleImport(d *schema.ResourceData, meta in
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandContactMethod(v interface{}) *pagerduty.ContactMethodReference {
+func expandContactMethod(v interface{}) (*pagerduty.ContactMethodReference, error) {
 	cm := v.(map[string]interface{})
+
+	if _, ok := cm["id"]; !ok {
+		return nil, fmt.Errorf("the `id` attribute of `contact_method` is required")
+	}
+
+	if t, ok := cm["type"]; !ok {
+		return nil, fmt.Errorf("the `type` attribute of `contact_method` is required")
+	} else {
+		switch t {
+		case "email_contact_method":
+		case "phone_contact_method":
+		case "push_notification_contact_method":
+		case "sms_contact_method":
+			// Valid
+		default:
+			return nil, fmt.Errorf("the `type` attribute of `contact_method` must be one of `email_contact_method`, `phone_contact_method`, `push_notification_contact_method` or `sms_contact_method`")
+		}
+	}
 
 	var contactMethod = &pagerduty.ContactMethodReference{
 		ID:   cm["id"].(string),
 		Type: cm["type"].(string),
 	}
 
-	return contactMethod
+	return contactMethod, nil
 }
 
 func flattenContactMethod(v *pagerduty.ContactMethodReference) map[string]interface{} {

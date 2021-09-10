@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
@@ -75,8 +75,8 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 						"pagerduty_service.foo", "alert_creation", "create_incidents"),
 					resource.TestCheckNoResourceAttr(
 						"pagerduty_service.foo", "alert_grouping"),
-					resource.TestCheckNoResourceAttr(
-						"pagerduty_service.foo", "alert_grouping_timeout"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_timeout", "null"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
 					resource.TestCheckResourceAttr(
