@@ -20,7 +20,7 @@ func resourcePagerDutyExtension() *schema.Resource {
 		Update: resourcePagerDutyExtensionUpdate,
 		Delete: resourcePagerDutyExtensionDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerDutyExtensionImport,
+			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -55,6 +55,7 @@ func resourcePagerDutyExtension() *schema.Resource {
 			},
 			"config": {
 				Type:             schema.TypeString,
+				Computed:         true,
 				Optional:         true,
 				ValidateFunc:     validation.ValidateJsonString,
 				DiffSuppressFunc: structure.SuppressJsonDiff,
@@ -123,7 +124,7 @@ func resourcePagerDutyExtensionRead(d *schema.ResourceData, meta interface{}) er
 		if err := d.Set("extension_objects", flattenExtensionObjects(extension.ExtensionObjects)); err != nil {
 			log.Printf("[WARN] error setting extension_objects: %s", err)
 		}
-		d.Set("extension_schema", extension.ExtensionSchema)
+		d.Set("extension_schema", extension.ExtensionSchema.ID)
 
 		if err := d.Set("config", flattenExtensionConfig(extension.Config)); err != nil {
 			log.Printf("[WARN] error setting extension config: %s", err)
@@ -163,22 +164,6 @@ func resourcePagerDutyExtensionDelete(d *schema.ResourceData, meta interface{}) 
 	d.SetId("")
 
 	return nil
-}
-
-func resourcePagerDutyExtensionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*pagerduty.Client)
-
-	extension, _, err := client.Extensions.Get(d.Id())
-
-	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("error importing pagerduty_extension. Expecting an importation ID for extension")
-	}
-
-	d.Set("endpoint_url", extension.EndpointURL)
-	d.Set("extension_objects", []string{extension.ExtensionObjects[0].ID})
-	d.Set("extension_schema", extension.ExtensionSchema.ID)
-
-	return []*schema.ResourceData{d}, err
 }
 
 func expandServiceObjects(v interface{}) []*pagerduty.ServiceReference {
