@@ -68,6 +68,8 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "description", "foo"),
 					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "status", "active"),
+					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
@@ -96,6 +98,8 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "description", "bar"),
 					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "status", "active"),
+					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "auto_resolve_timeout", "3600"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
@@ -121,6 +125,99 @@ func TestAccPagerDutyService_Basic(t *testing.T) {
 						"pagerduty_service.foo", "auto_resolve_timeout", "null"),
 					resource.TestCheckResourceAttr(
 						"pagerduty_service.foo", "acknowledgement_timeout", "null"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPagerDutyService_WithStatus(t *testing.T) {
+	username := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	email := fmt.Sprintf("%s@foo.com", username)
+	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
+	service := fmt.Sprintf("tf-%s", acctest.RandString(5))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPagerDutyServiceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckPagerDutyServiceConfig(username, email, escalationPolicy, service),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "status", "active"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "1800"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping"),
+					resource.TestCheckNoResourceAttr(
+						"pagerduty_service.foo", "alert_grouping_timeout"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
+					resource.TestCheckResourceAttrSet(
+						"pagerduty_service.foo", "html_url"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceWithStatus(username, email, escalationPolicy, service, "disabled"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "bar"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "status", "disabled"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "3600"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
+				),
+			},
+			{
+				Config: testAccCheckPagerDutyServiceWithStatus(username, email, escalationPolicy, service, "active"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckPagerDutyServiceExists("pagerduty_service.foo"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "name", service),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "description", "bar"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "status", "active"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "auto_resolve_timeout", "3600"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "acknowledgement_timeout", "3600"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "alert_creation", "create_incidents"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.#", "1"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.urgency", "high"),
+					resource.TestCheckResourceAttr(
+						"pagerduty_service.foo", "incident_urgency_rule.0.type", "constant"),
 				),
 			},
 		},
@@ -1103,4 +1200,45 @@ resource "pagerduty_service" "foo" {
 
 }
 `, username, email, escalationPolicy, service)
+}
+func testAccCheckPagerDutyServiceWithStatus(username, email, escalationPolicy, service, status string) string {
+	return fmt.Sprintf(`
+resource "pagerduty_user" "foo" {
+	name        = "%s"
+	email       = "%s"
+	color       = "green"
+	role        = "user"
+	job_title   = "foo"
+	description = "foo"
+}
+
+resource "pagerduty_escalation_policy" "foo" {
+	name        = "%s"
+	description = "bar"
+	num_loops   = 2
+
+	rule {
+		escalation_delay_in_minutes = 10
+		target {
+			type = "user_reference"
+			id   = pagerduty_user.foo.id
+		}
+	}
+}
+
+resource "pagerduty_service" "foo" {
+	name                    = "%s"
+	description             = "foo"
+	auto_resolve_timeout    = 1800
+	acknowledgement_timeout = 1800
+	escalation_policy       = pagerduty_escalation_policy.foo.id
+    status                  = "%s"
+
+	incident_urgency_rule {
+		type = "constant"
+		urgency = "high"
+	}
+
+}
+`, username, email, escalationPolicy, service, status)
 }

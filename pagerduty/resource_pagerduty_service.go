@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"regexp"
 	"strconv"
@@ -120,8 +121,12 @@ func resourcePagerDutyService() *schema.Resource {
 				Computed: true,
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         false,
+				Default:          "active",
+				ValidateFunc:     validation.StringInSlice([]string{"active", "disabled"}, false),
+				DiffSuppressFunc: suppressStatusDiffs,
 			},
 			"acknowledgement_timeout": {
 				Type:     schema.TypeString,
@@ -338,6 +343,8 @@ func resourcePagerDutyServiceCreate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] Creating PagerDuty service %s", service.Name)
 
+	service.Status = d.Get("status").(string)
+
 	service, _, err = client.Services.Create(service)
 	if err != nil {
 		return err
@@ -424,6 +431,20 @@ func resourcePagerDutyServiceUpdate(d *schema.ResourceData, meta interface{}) er
 	service, err := buildServiceStruct(d)
 	if err != nil {
 		return err
+	}
+
+	if d.HasChange("status") {
+		oldStatusRaw, newStatusRaw := d.GetChange("status")
+		oldStatus := oldStatusRaw.(string)
+		newStatus := newStatusRaw.(string)
+
+		if newStatus == "active" && oldStatus == "disabled" {
+			// Change of active status
+			service.Status = "active"
+		} else {
+			// New status has to be changed to disabled
+			service.Status = "disabled"
+		}
 	}
 
 	log.Printf("[INFO] Updating PagerDuty service %s", d.Id())
@@ -680,4 +701,14 @@ func expandScheduledActionAt(v interface{}) *pagerduty.At {
 func flattenScheduledActionAt(v *pagerduty.At) []interface{} {
 	at := map[string]interface{}{"type": v.Type, "name": v.Name}
 	return []interface{}{at}
+}
+
+// allow status listed here even though we only allow 'active' and 'disabled'
+// https://developer.pagerduty.com/api-reference/reference/REST/openapiv3.json/paths/~1services~1%7Bid%7D/put
+func suppressStatusDiffs(k, old, new string, d *schema.ResourceData) bool {
+	if (old == "warning" || old == "critical" || old == "maintenance") && new == "active" {
+		return true
+	}
+
+	return false
 }
