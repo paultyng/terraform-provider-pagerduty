@@ -28,6 +28,18 @@ func dataSourcePagerDutyTeam() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"members": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -71,6 +83,25 @@ func dataSourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error
 			)
 		}
 
+		if found != nil {
+			mo := &pagerduty.GetMembersOptions{}
+			resp, _, err := client.Teams.GetMembers(searchTeam, mo)
+			if err != nil {
+				if isErrCode(err, 429) {
+					// Delaying retry by 30s as recommended by PagerDuty
+					// https://developer.pagerduty.com/docs/rest-api-v2/rate-limiting/#what-are-possible-workarounds-to-the-events-api-rate-limit
+					time.Sleep(30 * time.Second)
+					return resource.RetryableError(err)
+				}
+
+				return resource.NonRetryableError(err)
+			}
+
+			if err := d.Set("members", dataSourceMembersRead(resp.Members)); err != nil {
+				return resource.RetryableError(err)
+			}
+		}
+
 		d.SetId(found.ID)
 		d.Set("name", found.Name)
 		d.Set("description", found.Description)
@@ -78,4 +109,14 @@ func dataSourcePagerDutyTeamRead(d *schema.ResourceData, meta interface{}) error
 
 		return nil
 	})
+}
+
+func dataSourceMembersRead(m []*pagerduty.Member) []map[string]interface{} {
+	members := make([]map[string]interface{}, 0, len(m))
+	for _, i := range m {
+		m := make(map[string]interface{})
+		m["id"] = i.User.ID
+		members = append(members, m)
+	}
+	return members
 }
