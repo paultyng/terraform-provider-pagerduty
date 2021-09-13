@@ -111,9 +111,17 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 }
 
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
+	var ServiceRegion = data.Get("service_region").(string)
+
+	if ServiceRegion == "us" || ServiceRegion == "" {
+		ServiceRegion = ""
+	} else {
+		ServiceRegion = ServiceRegion + "."
+	}
+
 	config := Config{
-		ApiUrl:              data.Get("api_url").(string),
-		AppUrl:              data.Get("app_url").(string),
+		ApiUrl:              "https://api." + ServiceRegion + "pagerduty.com",
+		AppUrl:              "https://app." + ServiceRegion + "pagerduty.com",
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
 		Token:               data.Get("token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
