@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strconv"
@@ -18,6 +19,16 @@ func resourcePagerDutyService() *schema.Resource {
 		Read:   resourcePagerDutyServiceRead,
 		Update: resourcePagerDutyServiceUpdate,
 		Delete: resourcePagerDutyServiceDelete,
+		CustomizeDiff: func(diff *schema.ResourceDiff, i interface{}) error {
+			in := diff.Get("incident_urgency_rule.#").(int)
+			for i := 0; i <= in; i++ {
+				t := diff.Get(fmt.Sprintf("incident_urgency_rule.%d.type", i)).(string)
+				if t == "use_support_hours" && diff.Get(fmt.Sprintf("incident_urgency_rule.%d.urgency", i)).(string) != "" {
+					return fmt.Errorf("general urgency cannot be set for a use_support_hours incident urgency rule type")
+				}
+			}
+			return nil
+		},
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
