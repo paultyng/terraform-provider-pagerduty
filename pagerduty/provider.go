@@ -25,6 +25,12 @@ func Provider() terraform.ResourceProvider {
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("PAGERDUTY_TOKEN", nil),
 			},
+
+			"service_region": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -99,7 +105,17 @@ func handleNotFoundError(err error, d *schema.ResourceData) error {
 }
 
 func providerConfigure(data *schema.ResourceData, terraformVersion string) (interface{}, error) {
+	var ServiceRegion = data.Get("service_region").(string)
+
+	if ServiceRegion == "us" || ServiceRegion == "" {
+		ServiceRegion = ""
+	} else {
+		ServiceRegion = ServiceRegion + "."
+	}
+
 	config := Config{
+		ApiUrl:              "https://api." + ServiceRegion + "pagerduty.com",
+		AppUrl:              "https://app." + ServiceRegion + "pagerduty.com",
 		SkipCredsValidation: data.Get("skip_credentials_validation").(bool),
 		Token:               data.Get("token").(string),
 		UserAgent:           fmt.Sprintf("(%s %s) Terraform/%s", runtime.GOOS, runtime.GOARCH, terraformVersion),
