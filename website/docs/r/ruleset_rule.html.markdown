@@ -120,7 +120,7 @@ The following arguments are supported:
 ### Action (`actions`) supports the following:
 * `route` (Optional) - The ID of the service where the event will be routed.
 * `priority` (Optional) - The ID of the priority applied to the event.
-* `severity` (Optional)  - The [severity level](https://support.pagerduty.com/docs/rulesets#section-set-severity-with-event-rules) of the event. Can be either `info`,`error`,`warning`, or `critical`.
+* `severity` (Optional)  - The [severity level](https://support.pagerduty.com/docs/rulesets#section-set-severity-with-event-rules) of the event. Can be either `info`,`warning`,`error`, or `critical`.
 * `annotate` (Optional) - Note added to the event.
 * `extractions` (Optional) - Allows you to copy important data from one event field to another. Extraction objects may use *either* of the following field structures:
   * `source` - Field where the data is being copied from. Must be a [PagerDuty Common Event Format (PD-CEF)](https://support.pagerduty.com/docs/pd-cef) field.
