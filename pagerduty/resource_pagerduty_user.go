@@ -44,6 +44,16 @@ func resourcePagerDutyUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "user",
+				ValidateFunc: validateValueFunc([]string{
+					"admin",
+					"limited_user",
+					"observer",
+					"owner",
+					"read_only_user",
+					"restricted_access",
+					"read_only_limited_user",
+					"user",
+				}),
 			},
 
 			"job_title": {
