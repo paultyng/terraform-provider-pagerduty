@@ -12,6 +12,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.resourceTeamMembership. Kept for testing purposes.
 func resourcePagerDutyTeamMembership() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePagerDutyTeamMembershipCreate,

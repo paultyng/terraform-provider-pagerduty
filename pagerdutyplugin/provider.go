@@ -79,6 +79,7 @@ func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 		func() resource.Resource { return &resourceServiceDependency{} },
 		func() resource.Resource { return &resourceTagAssignment{} },
 		func() resource.Resource { return &resourceTag{} },
+		func() resource.Resource { return &resourceTeamMembership{} },
 		func() resource.Resource { return &resourceTeam{} },
 		func() resource.Resource { return &resourceUserHandoffNotificationRule{} },
 		func() resource.Resource { return &resourceUserNotificationRule{} },
@@ -210,6 +211,7 @@ type providerArguments struct {
 }
 
 type SchemaGetter interface {
+	Get(context.Context, interface{}) diag.Diagnostics
 	GetAttribute(context.Context, path.Path, interface{}) diag.Diagnostics
 }
 
@@ -219,3 +221,6 @@ func extractString(ctx context.Context, schema SchemaGetter, name string, diags 
 	diags.Append(d...)
 	return s.ValueStringPointer()
 }
+
+// Helper constant used to have a semantically meaningful value in function calls
+const RetryNotFound = true

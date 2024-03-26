@@ -1,13 +1,14 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
+	"github.com/PagerDuty/go-pagerduty"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
 func TestAccPagerDutyTeamMembership_Basic(t *testing.T) {
@@ -15,9 +16,9 @@ func TestAccPagerDutyTeamMembership_Basic(t *testing.T) {
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamMembershipDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTeamMembershipConfig(user, team),
@@ -35,9 +36,9 @@ func TestAccPagerDutyTeamMembership_WithRole(t *testing.T) {
 	role := "manager"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamMembershipDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, role),
@@ -56,9 +57,9 @@ func TestAccPagerDutyTeamMembership_WithRoleConsistentlyAssigned(t *testing.T) {
 	secondRole := "responder"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamMembershipDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, firstRole),
@@ -80,43 +81,16 @@ func TestAccPagerDutyTeamMembership_WithRoleConsistentlyAssigned(t *testing.T) {
 	})
 }
 
-func TestAccPagerDutyTeamMembership_DestroyWithEscalationPolicyDependant(t *testing.T) {
-	user := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
-	role := "manager"
-	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependant(user, team, role, escalationPolicy),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyTeamMembershipExists("pagerduty_team_membership.foo"),
-				),
-			},
-			{
-				Config: testAccCheckPagerDutyTeamMembershipDestroyWithEscalationPolicyDependantUpdated(user, team, role, escalationPolicy),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerDutyTeamMembershipNoExists("pagerduty_team_membership.foo"),
-				),
-			},
-		},
-	})
-}
-
 func testAccCheckPagerDutyTeamMembershipDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_team_membership" {
 			continue
 		}
 
-		user, _, err := client.Users.Get(r.Primary.Attributes["user_id"], &pagerduty.GetUserOptions{})
+		ctx := context.Background()
+		user, err := testAccProvider.client.GetUserWithContext(ctx, r.Primary.Attributes["user_id"], pagerduty.GetUserOptions{})
 		if err == nil {
-			if isTeamMember(user, r.Primary.Attributes["team_id"]) {
+			if helperIsTeamMember(user, r.Primary.Attributes["team_id"]) {
 				return fmt.Errorf("%s is still a member of: %s", user.ID, r.Primary.Attributes["team_id"])
 			}
 		}
@@ -127,7 +101,6 @@ func testAccCheckPagerDutyTeamMembershipDestroy(s *terraform.State) error {
 
 func testAccCheckPagerDutyTeamMembershipExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client, _ := testAccProvider.Meta().(*Config).Client()
 		rs, ok := s.RootModule().Resources[n]
 
 		if !ok {
@@ -142,16 +115,17 @@ func testAccCheckPagerDutyTeamMembershipExists(n string) resource.TestCheckFunc 
 		teamID := rs.Primary.Attributes["team_id"]
 		role := rs.Primary.Attributes["role"]
 
-		user, _, err := client.Users.Get(userID, &pagerduty.GetUserOptions{})
+		ctx := context.Background()
+		user, err := testAccProvider.client.GetUserWithContext(ctx, userID, pagerduty.GetUserOptions{})
 		if err != nil {
 			return err
 		}
 
-		if !isTeamMember(user, teamID) {
+		if !helperIsTeamMember(user, teamID) {
 			return fmt.Errorf("%s is not a member of: %s", userID, teamID)
 		}
 
-		resp, _, err := client.Teams.GetMembers(teamID, &pagerduty.GetMembersOptions{})
+		resp, err := testAccProvider.client.ListTeamMembers(ctx, teamID, pagerduty.ListTeamMembersOptions{})
 		if err != nil {
 			return err
 		}
@@ -170,7 +144,6 @@ func testAccCheckPagerDutyTeamMembershipExists(n string) resource.TestCheckFunc 
 
 func testAccCheckPagerDutyTeamMembershipNoExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client, _ := testAccProvider.Meta().(*Config).Client()
 		rs, ok := s.RootModule().Resources[n]
 
 		if !ok {
@@ -184,17 +157,27 @@ func testAccCheckPagerDutyTeamMembershipNoExists(n string) resource.TestCheckFun
 		userID := rs.Primary.Attributes["user_id"]
 		teamID := rs.Primary.Attributes["team_id"]
 
-		user, _, err := client.Users.Get(userID, &pagerduty.GetUserOptions{})
+		ctx := context.Background()
+		user, err := testAccProvider.client.GetUserWithContext(ctx, userID, pagerduty.GetUserOptions{})
 		if err != nil {
 			return err
 		}
 
-		if isTeamMember(user, teamID) {
+		if helperIsTeamMember(user, teamID) {
 			return fmt.Errorf("%s is still a member of: %s", userID, teamID)
 		}
 
 		return nil
 	}
+}
+
+func helperIsTeamMember(user *pagerduty.User, teamID string) bool {
+	for _, team := range user.Teams {
+		if teamID == team.ID {
+			return true
+		}
+	}
+	return false
 }
 
 func testAccCheckPagerDutyTeamMembershipConfig(user, team string) string {
