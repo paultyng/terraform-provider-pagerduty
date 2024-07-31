@@ -13,6 +13,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.resourceVendor. Kept for testing purposes.
 func dataSourcePagerDutyVendor() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourcePagerDutyVendorRead,

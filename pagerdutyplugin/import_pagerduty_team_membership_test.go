@@ -13,9 +13,9 @@ func TestAccPagerDutyTeamMembership_import(t *testing.T) {
 	team := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamMembershipDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTeamMembershipConfig(user, team),
@@ -36,9 +36,9 @@ func TestAccPagerDutyTeamMembership_importWithRole(t *testing.T) {
 	role := "manager"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyTeamMembershipDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyTeamMembershipDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyTeamMembershipWithRoleConfig(user, team, role),

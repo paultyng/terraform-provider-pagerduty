@@ -14,9 +14,9 @@ func TestAccPagerDutyUserContactMethod_import(t *testing.T) {
 	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyUserContactMethodEmailConfig(username, email),

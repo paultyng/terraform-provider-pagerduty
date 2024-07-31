@@ -351,9 +351,26 @@ func testAccCheckPagerDutyTeamDestroy(s *terraform.State) error {
 
 func testAccCheckPagerDutyTeamConfig(team string) string {
 	return fmt.Sprintf(`
-
 resource "pagerduty_team" "foo" {
   name        = "%s"
   description = "foo"
 }`, team)
+}
+
+func testAccCheckPagerDutyTeamMembershipDestroy(s *terraform.State) error {
+	client, _ := testAccProvider.Meta().(*Config).Client()
+	for _, r := range s.RootModule().Resources {
+		if r.Type != "pagerduty_team_membership" {
+			continue
+		}
+
+		user, _, err := client.Users.Get(r.Primary.Attributes["user_id"], &pagerduty.GetUserOptions{})
+		if err == nil {
+			if isTeamMember(user, r.Primary.Attributes["team_id"]) {
+				return fmt.Errorf("%s is still a member of: %s", user.ID, r.Primary.Attributes["team_id"])
+			}
+		}
+	}
+
+	return nil
 }

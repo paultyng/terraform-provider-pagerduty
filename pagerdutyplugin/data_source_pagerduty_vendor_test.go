@@ -9,9 +9,9 @@ import (
 func TestAccDataSourcePagerDutyVendor_Basic(t *testing.T) {
 	dataSourceName := "data.pagerduty_vendor.foo"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyScheduleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyVendorConfig,
@@ -27,15 +27,15 @@ func TestAccDataSourcePagerDutyVendor_Basic(t *testing.T) {
 func TestAccDataSourcePagerDutyVendor_ExactMatch(t *testing.T) {
 	dataSourceName := "data.pagerduty_vendor.foo"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyScheduleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyExactMatchConfig,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dataSourceName, "id", "PKAPG94"),
-					resource.TestCheckResourceAttr(dataSourceName, "name", "Sentry"),
+					resource.TestCheckResourceAttr(dataSourceName, "id", "PAM4FGS"),
+					resource.TestCheckResourceAttr(dataSourceName, "name", "Datadog"),
 				),
 			},
 		},
@@ -45,9 +45,9 @@ func TestAccDataSourcePagerDutyVendor_ExactMatch(t *testing.T) {
 func TestAccDataSourcePagerDutyVendor_SpecialChars(t *testing.T) {
 	dataSourceName := "data.pagerduty_vendor.foo"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyScheduleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyScheduleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutySpecialCharsConfig,
@@ -68,7 +68,7 @@ data "pagerduty_vendor" "foo" {
 
 const testAccDataSourcePagerDutyExactMatchConfig = `
 data "pagerduty_vendor" "foo" {
-  name = "sentry"
+  name = "datadog"
 }
 `
 

@@ -15,9 +15,9 @@ func TestAccPagerDutyUserNotificationRule_import(t *testing.T) {
 	contactMethodType := "phone_contact_method"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyUserNotificationRuleContactMethodConfig(contactMethodType, username, email),

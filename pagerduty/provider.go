@@ -87,27 +87,24 @@ func Provider(isMux bool) *schema.Provider {
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"pagerduty_escalation_policy":                          dataSourcePagerDutyEscalationPolicy(),
-			"pagerduty_schedule":                                   dataSourcePagerDutySchedule(),
-			"pagerduty_user":                                       dataSourcePagerDutyUser(),
-			"pagerduty_users":                                      dataSourcePagerDutyUsers(),
 			"pagerduty_licenses":                                   dataSourcePagerDutyLicenses(),
 			"pagerduty_user_contact_method":                        dataSourcePagerDutyUserContactMethod(),
 			"pagerduty_team":                                       dataSourcePagerDutyTeam(),
 			"pagerduty_vendor":                                     dataSourcePagerDutyVendor(),
 			"pagerduty_service":                                    dataSourcePagerDutyService(),
 			"pagerduty_service_integration":                        dataSourcePagerDutyServiceIntegration(),
+			"pagerduty_automation_actions_action":                  dataSourcePagerDutyAutomationActionsAction(),
+			"pagerduty_automation_actions_runner":                  dataSourcePagerDutyAutomationActionsRunner(),
 			"pagerduty_business_service":                           dataSourcePagerDutyBusinessService(),
+			"pagerduty_event_orchestration":                        dataSourcePagerDutyEventOrchestration(),
+			"pagerduty_event_orchestration_global_cache_variable":  dataSourcePagerDutyEventOrchestrationGlobalCacheVariable(),
+			"pagerduty_event_orchestration_integration":            dataSourcePagerDutyEventOrchestrationIntegration(),
+			"pagerduty_event_orchestration_service_cache_variable": dataSourcePagerDutyEventOrchestrationServiceCacheVariable(),
+			"pagerduty_event_orchestrations":                       dataSourcePagerDutyEventOrchestrations(),
+			"pagerduty_incident_custom_field":                      dataSourcePagerDutyIncidentCustomField(),
+			"pagerduty_incident_workflow":                          dataSourcePagerDutyIncidentWorkflow(),
 			"pagerduty_priority":                                   dataSourcePagerDutyPriority(),
 			"pagerduty_ruleset":                                    dataSourcePagerDutyRuleset(),
-			"pagerduty_event_orchestration":                        dataSourcePagerDutyEventOrchestration(),
-			"pagerduty_event_orchestrations":                       dataSourcePagerDutyEventOrchestrations(),
-			"pagerduty_event_orchestration_integration":            dataSourcePagerDutyEventOrchestrationIntegration(),
-			"pagerduty_event_orchestration_global_cache_variable":  dataSourcePagerDutyEventOrchestrationGlobalCacheVariable(),
-			"pagerduty_event_orchestration_service_cache_variable": dataSourcePagerDutyEventOrchestrationServiceCacheVariable(),
-			"pagerduty_automation_actions_runner":                  dataSourcePagerDutyAutomationActionsRunner(),
-			"pagerduty_automation_actions_action":                  dataSourcePagerDutyAutomationActionsAction(),
-			"pagerduty_incident_workflow":                          dataSourcePagerDutyIncidentWorkflow(),
-			"pagerduty_incident_custom_field":                      dataSourcePagerDutyIncidentCustomField(),
 			"pagerduty_team_members":                               dataSourcePagerDutyTeamMembers(),
 		},
 
@@ -122,7 +119,6 @@ func Provider(isMux bool) *schema.Provider {
 			"pagerduty_team_membership":                               resourcePagerDutyTeamMembership(),
 			"pagerduty_user":                                          resourcePagerDutyUser(),
 			"pagerduty_user_contact_method":                           resourcePagerDutyUserContactMethod(),
-			"pagerduty_user_notification_rule":                        resourcePagerDutyUserNotificationRule(),
 			"pagerduty_event_rule":                                    resourcePagerDutyEventRule(),
 			"pagerduty_ruleset":                                       resourcePagerDutyRuleset(),
 			"pagerduty_ruleset_rule":                                  resourcePagerDutyRulesetRule(),
@@ -154,14 +150,17 @@ func Provider(isMux bool) *schema.Provider {
 
 	if isMux {
 		delete(p.DataSourcesMap, "pagerduty_business_service")
+		delete(p.DataSourcesMap, "pagerduty_escalation_policy")
 		delete(p.DataSourcesMap, "pagerduty_licenses")
 		delete(p.DataSourcesMap, "pagerduty_priority")
 		delete(p.DataSourcesMap, "pagerduty_service")
 		delete(p.DataSourcesMap, "pagerduty_service_integration")
+		delete(p.DataSourcesMap, "pagerduty_vendor")
 
 		delete(p.ResourcesMap, "pagerduty_addon")
 		delete(p.ResourcesMap, "pagerduty_business_service")
 		delete(p.ResourcesMap, "pagerduty_team")
+		delete(p.ResourcesMap, "pagerduty_team_membership")
 	}
 
 	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {

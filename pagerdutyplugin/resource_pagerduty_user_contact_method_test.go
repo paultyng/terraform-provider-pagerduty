@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -17,9 +18,9 @@ func TestAccPagerDutyUserContactMethodEmail_Basic(t *testing.T) {
 	emailUpdated := fmt.Sprintf("%s@foo.test", usernameUpdated)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserContactMethodDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyUserContactMethodEmailConfig(username, email),
@@ -44,9 +45,9 @@ func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 	emailUpdated := fmt.Sprintf("%s@foo.test", usernameUpdated)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserContactMethodDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, "4153013250"),
@@ -56,7 +57,7 @@ func TestAccPagerDutyUserContactMethodPhone_Basic(t *testing.T) {
 			},
 			{
 				Config:      testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, "04153013250"),
-				ExpectError: regexp.MustCompile("phone numbers starting with a 0 are not supported"),
+				ExpectError: regexp.MustCompile("Phone number can't start with a zero"),
 			},
 			{
 				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(usernameUpdated, emailUpdated, "8019351337"),
@@ -74,9 +75,9 @@ func TestAccPagerDutyUserContactMethodPhone_FormatValidation(t *testing.T) {
 	tooLongNumber := "4153013250415301325041530132504153013250,415301325041530132504,530132504153013250"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserContactMethodDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckPagerDutyUserContactMethodPhoneFormatValidationConfig(username, email, "phone_contact_method", "1", tooLongNumber),
@@ -109,9 +110,9 @@ func TestAccPagerDutyUserContactMethodPhone_EnforceUpdateIfAlreadyExist(t *testi
 	newPhoneNumber := "4153013251"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserContactMethodDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyUserContactMethodPhoneConfig(username, email, phoneNumber),
@@ -140,9 +141,9 @@ func TestAccPagerDutyUserContactMethodSMS_Basic(t *testing.T) {
 	emailUpdated := fmt.Sprintf("%s@foo.test", usernameUpdated)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserContactMethodDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyUserContactMethodSMSConfig(username, email),
@@ -165,9 +166,9 @@ func TestAccPagerDutyUserContactMethodPhone_NoPermaDiffWhenOmittingCountryCode(t
 	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserContactMethodDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserContactMethodDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyUserContactMethodPhoneNoPermaDiffWhenOmittingCountryCodeConfig(username, email, "4153013250"),
@@ -184,13 +185,14 @@ func TestAccPagerDutyUserContactMethodPhone_NoPermaDiffWhenOmittingCountryCode(t
 }
 
 func testAccCheckPagerDutyUserContactMethodDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
+	ctx := context.Background()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_user_contact_method" {
 			continue
 		}
 
-		if _, _, err := client.Users.GetContactMethod(r.Primary.Attributes["user_id"], r.Primary.ID); err == nil {
+		_, err := testAccProvider.client.GetUserContactMethodWithContext(ctx, r.Primary.Attributes["user_id"], r.Primary.ID)
+		if err == nil {
 			return fmt.Errorf("User contact method still exists")
 		}
 
@@ -209,9 +211,8 @@ func testAccCheckPagerDutyUserContactMethodExists(n string) resource.TestCheckFu
 			return fmt.Errorf("No user contact method ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-
-		found, _, err := client.Users.GetContactMethod(rs.Primary.Attributes["user_id"], rs.Primary.ID)
+		ctx := context.Background()
+		found, err := testAccProvider.client.GetUserContactMethodWithContext(ctx, rs.Primary.Attributes["user_id"], rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -237,15 +238,14 @@ func testAccAddPhoneContactOutsideTerraform(n, p string) resource.TestCheckFunc 
 		}
 		userID := rs.Primary.Attributes["user_id"]
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-
-		found, _, err := client.Users.GetContactMethod(userID, rs.Primary.ID)
+		ctx := context.Background()
+		found, err := testAccProvider.client.GetUserContactMethodWithContext(ctx, rs.Primary.Attributes["user_id"], rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 
 		found.Address = p
-		_, _, err = client.Users.CreateContactMethod(userID, found)
+		_, err = testAccProvider.client.CreateUserContactMethodWithContext(ctx, userID, *found)
 		if err != nil {
 			return fmt.Errorf("was not possible to set phone %s contact number outside Terraform state: %v", p, err)
 		}

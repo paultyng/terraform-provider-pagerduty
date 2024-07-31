@@ -18,8 +18,8 @@ func TestAccDataSourcePagerDutyUser_Basic(t *testing.T) {
 	description := fmt.Sprintf("%s-description", username)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyUserConfig(username, email, jobTitle, timeZone, role, description),

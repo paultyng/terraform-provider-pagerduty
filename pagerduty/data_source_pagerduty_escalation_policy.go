@@ -11,6 +11,7 @@ import (
 	"github.com/heimweh/go-pagerduty/pagerduty"
 )
 
+// Deprecated: Migrated to pagerdutyplugin.dataSourceEscalationPolicy. Kept for testing purposes.
 func dataSourcePagerDutyEscalationPolicy() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourcePagerDutyEscalationPolicyRead,

@@ -1,6 +1,7 @@
 package pagerduty
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -18,9 +19,9 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Basic(t *testing.T) {
 	contactMethodType3 := "sms_contact_method"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserNotificationRuleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserNotificationRuleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckPagerDutyUserNotificationRuleContactMethodConfig(contactMethodType1, username, email),
@@ -49,13 +50,17 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Invalid(t *testing.T) {
 	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserNotificationRuleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserNotificationRuleDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckPagerDutyUserNotificationRuleContactMethodConfig_Invalid(username, email),
-				ExpectError: regexp.MustCompile("the `type` attribute of `contact_method` must be one of `email_contact_method`, `phone_contact_method`, `push_notification_contact_method` or `sms_contact_method`"),
+				Config: testAccCheckPagerDutyUserNotificationRuleContactMethodConfig_Invalid(username, email),
+				ExpectError: regexp.MustCompile(
+					`Attribute contact_method.type value must be one of: \["email_contact_method"` +
+						`\s+"phone_contact_method" "push_notification_contact_method"` +
+						`\s+"sms_contact_method"\], got: "invalid_contact_method`,
+				),
 			},
 		},
 	})
@@ -66,13 +71,13 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Missing_id(t *testing.T) 
 	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserNotificationRuleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserNotificationRuleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckPagerDutyUserNotificationRuleContactMethodConfig_Missing_id(username, email),
-				ExpectError: regexp.MustCompile("the `id` attribute of `contact_method` is required"),
+				ExpectError: regexp.MustCompile(`The argument "id" is required, but no definition was found.`),
 			},
 		},
 	})
@@ -83,13 +88,13 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Missing_type(t *testing.T
 	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserNotificationRuleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserNotificationRuleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckPagerDutyUserNotificationRuleContactMethodConfig_Missing_type(username, email),
-				ExpectError: regexp.MustCompile("the `type` attribute of `contact_method` is required"),
+				ExpectError: regexp.MustCompile(`The argument "type" is required, but no definition was found.`),
 			},
 		},
 	})
@@ -100,30 +105,31 @@ func TestAccPagerDutyUserNotificationRuleContactMethod_Unknown_key(t *testing.T)
 	email := fmt.Sprintf("%s@foo.test", username)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPagerDutyUserNotificationRuleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		CheckDestroy:             testAccCheckPagerDutyUserNotificationRuleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckPagerDutyUserNotificationRuleContactMethodConfig_Unknown_key(username, email),
-				ExpectError: regexp.MustCompile("`contact_method` must only have `id` and `types` attributes: foo"),
+				ExpectError: regexp.MustCompile(`An argument named "foo" is not expected here.`),
 			},
 		},
 	})
 }
 
 func testAccCheckPagerDutyUserNotificationRuleDestroy(s *terraform.State) error {
-	client, _ := testAccProvider.Meta().(*Config).Client()
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "pagerduty_user_notification_rule" {
 			continue
 		}
 
-		if _, _, err := client.Users.GetNotificationRule(r.Primary.Attributes["user_id"], r.Primary.ID); err == nil {
+		client := testAccProvider.client
+		ctx := context.Background()
+		if _, err := client.GetUserNotificationRuleWithContext(ctx, r.Primary.Attributes["user_id"], r.Primary.ID); err == nil {
 			return fmt.Errorf("User notification rule still exists")
 		}
-
 	}
+
 	return nil
 }
 
@@ -138,9 +144,9 @@ func testAccCheckPagerDutyUserNotificationRuleExists(n string) resource.TestChec
 			return fmt.Errorf("No user notification rule ID is set")
 		}
 
-		client, _ := testAccProvider.Meta().(*Config).Client()
-
-		found, _, err := client.Users.GetNotificationRule(rs.Primary.Attributes["user_id"], rs.Primary.ID)
+		client := testAccProvider.client
+		ctx := context.Background()
+		found, err := client.GetUserNotificationRuleWithContext(ctx, rs.Primary.Attributes["user_id"], rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -160,7 +166,7 @@ resource "pagerduty_user_notification_rule" "foo" {
   start_delay_in_minutes = 1
   urgency                = "high"
 
-  contact_method = {
+  contact_method {
     type = "%[1]v"
     id   = pagerduty_user_contact_method.%[1]v.id
   }
@@ -207,7 +213,7 @@ resource "pagerduty_user_notification_rule" "foo" {
   start_delay_in_minutes = 1
   urgency                = "high"
 
-  contact_method = {
+  contact_method {
     type = "invalid_contact_method"
     id   = pagerduty_user_contact_method.email_contact_method.id
   }
@@ -238,7 +244,7 @@ resource "pagerduty_user_notification_rule" "foo" {
   start_delay_in_minutes = 1
   urgency                = "high"
 
-  contact_method = {
+  contact_method {
     type = "invalid_contact_method"
   }
 }
@@ -261,7 +267,7 @@ resource "pagerduty_user_notification_rule" "foo" {
   start_delay_in_minutes = 1
   urgency                = "high"
 
-  contact_method = {
+  contact_method {
     id   = pagerduty_user_contact_method.email_contact_method.id
   }
 }
@@ -291,11 +297,10 @@ resource "pagerduty_user_notification_rule" "foo" {
   start_delay_in_minutes = 1
   urgency                = "high"
 
-  contact_method = {
+  contact_method {
     type = pagerduty_user_contact_method.email_contact_method.type
     id   = pagerduty_user_contact_method.email_contact_method.id
-
-	foo = "bar"
+    foo  = "bar"
   }
 }
 

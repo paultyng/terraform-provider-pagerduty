@@ -15,8 +15,8 @@ func TestAccDataSourcePagerDutyEscalationPolicy_Basic(t *testing.T) {
 	escalationPolicy := fmt.Sprintf("tf-%s", acctest.RandString(5))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyEscalationPolicyConfig(username, email, escalationPolicy),

@@ -15,12 +15,13 @@ func TestAccDataSourcePagerDutySchedule_Basic(t *testing.T) {
 	email := fmt.Sprintf("%s@foo.test", username)
 	schedule := fmt.Sprintf("tf-%s", acctest.RandString(5))
 	location := "Europe/Berlin"
-	start := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
-	rotationVirtualStart := timeNowInLoc(location).Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	start := testAccTimeNow().Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
+	rotationVirtualStart := testAccTimeNow().Add(24 * time.Hour).Round(1 * time.Hour).Format(time.RFC3339)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyScheduleConfig(username, email, schedule, location, start, rotationVirtualStart),

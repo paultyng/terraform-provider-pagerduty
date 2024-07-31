@@ -2,10 +2,8 @@ package pagerduty
 
 import (
 	"context"
-	"os"
-	"testing"
-	"time"
-
+	"fmt"
+	"github.com/PagerDuty/go-pagerduty"
 	pd "github.com/PagerDuty/terraform-provider-pagerduty/pagerduty"
 	"github.com/PagerDuty/terraform-provider-pagerduty/util"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -13,7 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"os"
+	"testing"
+	"time"
 )
+
+func TestMain(m *testing.M) {
+	resource.TestMain(m)
+}
 
 var testAccProvider = New()
 
@@ -97,4 +102,17 @@ func testAccPreCheckPagerDutyAbility(t *testing.T, ability string) {
 	if err := testAccProvider.client.TestAbilityWithContext(ctx, ability); err != nil {
 		t.Skipf("Missing ability: %s. Skipping test", ability)
 	}
+}
+
+func testAccCheckPagerDutyUserDestroy(s *terraform.State) error {
+	for _, r := range s.RootModule().Resources {
+		if r.Type != "pagerduty_user" {
+			continue
+		}
+		ctx := context.Background()
+		if _, err := testAccProvider.client.GetUserWithContext(ctx, r.Primary.ID, pagerduty.GetUserOptions{}); err == nil {
+			return fmt.Errorf("User still exists")
+		}
+	}
+	return nil
 }

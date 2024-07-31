@@ -33,8 +33,8 @@ func TestAccDataSourcePagerDutyUsers_Basic(t *testing.T) {
 	timeZone3 := timeZone
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3),
@@ -129,10 +129,14 @@ func testAccDataSourcePagerDutyUsersExists(n string) resource.TestCheckFunc {
 func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3 string) string {
 	return fmt.Sprintf(`
     resource "pagerduty_team" "test1" {
-        name        = "%s"
+        name = "%s"
     }
     resource "pagerduty_team" "test2" {
-        name        = "%s"
+        name = "%s"
+    }
+
+    data "pagerduty_license" "stakeholder" {
+        name = "Digital Operations (Stakeholder)"
     }
 
     resource "pagerduty_user" "test_wo_team" {
@@ -141,6 +145,7 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
       job_title = "%s"
       time_zone = "%s"
       description = "%s"
+      license = data.pagerduty_license.stakeholder.id
     }
     resource "pagerduty_user" "test_w_team1" {
       name = "%s"
@@ -148,6 +153,7 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
       job_title = "%s"
       time_zone = "%s"
       description = "%s"
+      license = data.pagerduty_license.stakeholder.id
     }
     resource "pagerduty_user" "test_w_team2" {
       name = "%s"
@@ -155,6 +161,7 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
       job_title = "%s"
       time_zone = "%s"
       description = "%s"
+      license = data.pagerduty_license.stakeholder.id
     }
 
     resource "pagerduty_team_membership" "test1" {
@@ -179,5 +186,10 @@ func testAccDataSourcePagerDutyUsersConfig(teamname1, teamname2, username1, emai
       depends_on = [pagerduty_team_membership.test2]
       team_ids = [pagerduty_team.test1.id, pagerduty_team.test2.id]
     }
-`, teamname1, teamname2, username1, email1, title1, timeZone1, description1, username2, email2, title2, timeZone2, description2, username3, email3, title3, timeZone3, description3)
+`,
+		teamname1, teamname2,
+		username1, email1, title1, timeZone1, description1,
+		username2, email2, title2, timeZone2, description2,
+		username3, email3, title3, timeZone3, description3,
+	)
 }

@@ -53,16 +53,20 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 func (p *Provider) DataSources(_ context.Context) [](func() datasource.DataSource) {
 	return [](func() datasource.DataSource){
 		func() datasource.DataSource { return &dataSourceBusinessService{} },
+		func() datasource.DataSource { return &dataSourceEscalationPolicy{} },
 		func() datasource.DataSource { return &dataSourceExtensionSchema{} },
 		func() datasource.DataSource { return &dataSourceIntegration{} },
-		func() datasource.DataSource { return &dataSourceLicense{} },
 		func() datasource.DataSource { return &dataSourceLicenses{} },
+		func() datasource.DataSource { return &dataSourceLicense{} },
 		func() datasource.DataSource { return &dataSourcePriority{} },
 		func() datasource.DataSource { return &dataSourceService{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourceScores{} },
 		func() datasource.DataSource { return &dataSourceStandardsResourcesScores{} },
 		func() datasource.DataSource { return &dataSourceStandards{} },
 		func() datasource.DataSource { return &dataSourceTag{} },
+		func() datasource.DataSource { return &dataSourceUsers{} },
+		func() datasource.DataSource { return &dataSourceUser{} },
+		func() datasource.DataSource { return &dataSourceVendor{} },
 	}
 }
 
@@ -75,8 +79,10 @@ func (p *Provider) Resources(_ context.Context) [](func() resource.Resource) {
 		func() resource.Resource { return &resourceServiceDependency{} },
 		func() resource.Resource { return &resourceTagAssignment{} },
 		func() resource.Resource { return &resourceTag{} },
+		func() resource.Resource { return &resourceTeamMembership{} },
 		func() resource.Resource { return &resourceTeam{} },
 		func() resource.Resource { return &resourceUserHandoffNotificationRule{} },
+		func() resource.Resource { return &resourceUserNotificationRule{} },
 	}
 }
 
@@ -205,6 +211,7 @@ type providerArguments struct {
 }
 
 type SchemaGetter interface {
+	Get(context.Context, interface{}) diag.Diagnostics
 	GetAttribute(context.Context, path.Path, interface{}) diag.Diagnostics
 }
 
@@ -214,3 +221,6 @@ func extractString(ctx context.Context, schema SchemaGetter, name string, diags 
 	diags.Append(d...)
 	return s.ValueStringPointer()
 }
+
+// Helper constant used to have a semantically meaningful value in function calls
+const RetryNotFound = true
