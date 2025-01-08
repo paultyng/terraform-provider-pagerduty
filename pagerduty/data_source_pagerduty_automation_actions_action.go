@@ -99,6 +99,11 @@ func dataSourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"map_to_all_services": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+			},
 		},
 	}
 }
