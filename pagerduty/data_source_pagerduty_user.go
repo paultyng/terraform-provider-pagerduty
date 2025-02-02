@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
@@ -74,7 +75,7 @@ func dataSourcePagerDutyUserRead(d *schema.ResourceData, meta interface{}) error
 		var found *pagerduty.FullUser
 
 		for _, user := range resp {
-			if user.Email == searchEmail {
+			if strings.EqualFold(user.Email, searchEmail) {
 				found = user
 				break
 			}
