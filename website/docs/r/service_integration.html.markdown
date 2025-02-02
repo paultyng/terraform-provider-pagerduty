@@ -174,11 +174,11 @@ The following arguments are supported:
 
   Email filters (`email_filter`) supports the following:
 
-  * `body_mode` - (Required) Can be `always` or `match`.
+  * `body_mode` - (Required) Can be `always`, `match` or `no-match`.
   * `body_regex` - (Optional) Should be a valid regex or `null`
-  * `from_email_mode` - (Required) Can be `always` or `match`.
+  * `from_email_mode` - (Required) Can be `always`, `match` or `no-match`.
   * `from_email_regex` - (Optional) Should be a valid regex or `null`
-  * `subject_mode` - (Required) Can be `always` or `match`.
+  * `subject_mode` - (Required) Can be `always`, `match` or `no-match`.
   * `subject_regex` - (Optional) Should be a valid regex or `null`
 
   Email parsers (`email_parser`) supports the following:
