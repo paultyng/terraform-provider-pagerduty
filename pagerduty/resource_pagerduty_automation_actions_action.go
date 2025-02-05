@@ -104,6 +104,11 @@ func resourcePagerDutyAutomationActionsAction() *schema.Resource {
 				Computed: true,
 				Optional: true,
 			},
+			"map_to_all_services": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -165,6 +170,14 @@ func buildAutomationActionsActionStruct(d *schema.ResourceData) (*pagerduty.Auto
 
 	attr, _ := d.Get("only_invocable_on_unresolved_incidents").(bool)
 	automationActionsAction.OnlyInvocableOnUnresolvedIncidents = &attr
+
+	if attr, ok := d.GetOk("map_to_all_services"); ok {
+		val := attr.(bool)
+		automationActionsAction.MapToAllServices = &val
+	}
+
+	attr2, _ := d.Get("map_to_all_services").(bool)
+	automationActionsAction.MapToAllServices = &attr2
 
 	return &automationActionsAction, nil
 }
@@ -314,6 +327,10 @@ func resourcePagerDutyAutomationActionsActionRead(d *schema.ResourceData, meta i
 
 			if automationActionsAction.OnlyInvocableOnUnresolvedIncidents != nil {
 				d.Set("only_invocable_on_unresolved_incidents", *automationActionsAction.OnlyInvocableOnUnresolvedIncidents)
+			}
+
+			if automationActionsAction.MapToAllServices != nil {
+				d.Set("map_to_all_services", *automationActionsAction.MapToAllServices)
 			}
 		}
 		return nil

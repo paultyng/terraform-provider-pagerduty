@@ -40,6 +40,7 @@ The following attributes are exported:
 * `action_classification` - (Optional) The category of the action. The only allowed values are `diagnostic` and `remediation`.
 * `modify_time` - (Optional) The last time action has been modified. Represented as an ISO 8601 timestamp.
 * `only_invocable_on_unresolved_incidents` - (Optional) Whether or not the action can be invoked on unresolved incidents.
+* `map_to_all_services` - (Optional) If the action should be able to be run against all services or just specified ones.
 
 Action Data (`action_data_reference`) supports the following:
 
