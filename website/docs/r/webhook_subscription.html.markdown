@@ -96,9 +96,10 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-  * `id` - The ID of the slack connection.
-  * `source_name`- Name of the source (team or service) in Slack connection.
-  * `channel_name`- Name of the Slack channel in Slack connection.
+  * `id` - The ID of the webhook subscription.
+  * `type` - The type indicating the schema of the object.
+  * `active` - Determines whether this subscription will produce webhook events.
+  * `description` - A short description of the webhook subscription.
 
 ## Import
 
